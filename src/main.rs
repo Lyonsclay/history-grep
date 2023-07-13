@@ -35,7 +35,7 @@ impl History {
             .unwrap_or_else(|| "")
             .to_string();
 
-               let home_path = Self::get_path_from_env("HOME");
+        let home_path = Self::get_path_from_env("HOME");
         let mut history_path = home_path.clone();
         history_path.push(&format!(".{}_history", shell));
 

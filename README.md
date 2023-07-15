@@ -4,6 +4,8 @@
 
 history-grep is a command line tool to search history files with search terms.
 
+</div>
+
 The default behavior is to look for the default shell history file and parse it with as many space seperated terms as you like.
 
 ``` sh
@@ -15,7 +17,6 @@ $ hg docker exec
 : 1685566287:0;docker exec -d airflow airflow scheduler
 ```
 
-</div>
 
 [Flags](#flags) •
 [Installation](#installation) •

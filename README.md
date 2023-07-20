@@ -47,3 +47,11 @@ Options:
 
 ## Examples
 
+## Shells
+
+zsh
+* Default log format: : <beginning time>:<elapsed seconds>;<command>
+
+bash
+* Default log format: <command>
+* Can take $HISTFILEFORMAT env var to alter format.

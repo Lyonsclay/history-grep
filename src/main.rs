@@ -131,13 +131,17 @@ impl History {
     }
 
     fn load_history(&mut self) {
-        let file_data = Self::read_lines(&self.history_path);
-        // println!("{:?}", file_data);
-        if let Ok(data) = file_data {
-            for line in data {
-                if let Ok(line_str) = line {
-                    self.history_list.push(line_str)
+        match Self::read_lines(&self.history_path) {
+            Ok(lines) => {
+                for line in lines {
+                    match line {
+                        Ok(line_str) => self.history_list.push(line_str),
+                        Err(e) => eprintln!("Failed to read line: {}", e),
+                    }
                 }
+            }
+            Err(e) => {
+                eprintln!("Failed to read lines from file: {}", e);
             }
         }
     }
@@ -210,9 +214,7 @@ fn main() {
     } else if args.file {
         search_path = get_file_path()
         // search
-    } else if history
-        .history_path.exists()
-    {
+    } else if history.history_path.exists() {
         println!(
             "It appears that you are using {} shell as your default.",
             history.shell_type.as_ref().unwrap()

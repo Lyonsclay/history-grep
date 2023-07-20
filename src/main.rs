@@ -5,6 +5,8 @@ use std::{
     fs::File,
     io::{self, stdin, BufRead, BufReader, Error, ErrorKind},
     path::{Path, PathBuf},
+    process::Command,
+    str,
 };
 
 use clap::Parser;
@@ -24,7 +26,7 @@ struct Cli {
 
 struct History {
     home_path: PathBuf,
-    shell_type: String,
+    shell_type: Result<String, ShellError>,
     history_path: PathBuf,
     history_list: Vec<String>,
     query_results: Vec<String>,
@@ -32,16 +34,18 @@ struct History {
 
 impl History {
     fn new() -> Self {
-        let shell_type = Self::get_str_from_env("SHELL")
-            .split("/")
-            .last()
-            .unwrap_or_else(|| "")
-            .to_string();
+        let shell_type = get_shell();
 
-        let home_path = Self::get_path_from_env("HOME");
+        let home_var = env::var("HOME").unwrap_or_else(|e| {
+            println!("{} ${}", e, "HOME");
+            String::new()
+        });
+
+        let home_path = PathBuf::from(home_var);
         let mut history_path = home_path.clone();
-        history_path.push(&format!(".{}_history", shell_type));
-
+        if shell_type.is_ok() {
+            history_path.push(&format!(".{}_history", shell_type.as_ref().unwrap()));
+        }
         History {
             home_path,
             shell_type,
@@ -50,16 +54,56 @@ impl History {
             query_results: Vec::new(),
         }
     }
+}
 
-    fn get_str_from_env(env_var: &str) -> String {
-        env::var(env_var).unwrap_or_else(|e| {
-            println!("{} ${}", e, env_var);
-            String::new()
-        })
+#[derive(Debug)]
+enum ShellError {
+    EnvVarError(std::env::VarError),
+    CommandError(std::io::Error),
+    Utf8Error(std::str::Utf8Error),
+}
+
+impl std::fmt::Display for ShellError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ShellError::EnvVarError(e) => write!(f, "Failed to get environment variable: {}", e),
+            ShellError::CommandError(e) => write!(f, "Command execution failed: {}", e),
+            ShellError::Utf8Error(e) => write!(f, "Failed to decode output: {}", e),
+        }
     }
+}
 
-    fn get_path_from_env(env_var: &str) -> PathBuf {
-        PathBuf::from(Self::get_str_from_env(env_var))
+impl std::error::Error for ShellError {}
+
+fn get_shell() -> Result<String, ShellError> {
+    let shell_path = match env::var("SHELL") {
+        Ok(shell) => Ok(shell),
+        Err(e) => Err(ShellError::EnvVarError(e)),
+    }
+    .or_else(|_| {
+        let output = Command::new("sh")
+            .arg("-c")
+            .arg("echo $0")
+            .output()
+            .map_err(ShellError::CommandError)?;
+
+        if output.status.success() {
+            let shell = str::from_utf8(&output.stdout).map_err(ShellError::Utf8Error)?;
+            Ok(shell.trim().to_string())
+        } else {
+            Err(ShellError::CommandError(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Command execution was not successful",
+            )))
+        }
+    });
+
+    match shell_path {
+        Ok(path) => {
+            let shell = path.split("/").last().unwrap_or("").to_string();
+            Ok(shell)
+        }
+        Err(err) => Err(err),
     }
 }
 
@@ -88,6 +132,7 @@ impl History {
 
     fn load_history(&mut self) {
         let file_data = Self::read_lines(&self.history_path);
+        // println!("{:?}", file_data);
         if let Ok(data) = file_data {
             for line in data {
                 if let Ok(line_str) = line {
@@ -103,21 +148,21 @@ impl History {
             "Searching for - {:?} - in {:?}",
             args.pattern, self.history_path
         );
-            for line in &self.history_list {
-                    let mut found = false;
-                for arg in &args.pattern {
-                    if line.contains(&*arg) {
-                        found = true;
-                    } else {
-                        found = false;
-                        break;
-                    }
-                }
-                if found == true {
-                    self.query_results.push(line.to_owned());
-                    println!("{}", line.to_owned());
+        for line in &self.history_list {
+            let mut found = false;
+            for arg in &args.pattern {
+                if line.contains(&*arg) {
+                    found = true;
+                } else {
+                    found = false;
+                    break;
                 }
             }
+            if found == true {
+                self.query_results.push(line.to_owned());
+                println!("{}", line.to_owned());
+            }
+        }
     }
 }
 
@@ -165,10 +210,12 @@ fn main() {
     } else if args.file {
         search_path = get_file_path()
         // search
-    } else if history.shell_type != "" {
+    } else if history
+        .history_path.exists()
+    {
         println!(
             "It appears that you are using {} shell as your default.",
-            history.shell_type
+            history.shell_type.as_ref().unwrap()
         );
         search_path = history.history_path
     } else {

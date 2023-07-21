@@ -58,17 +58,17 @@ impl History {
 
 #[derive(Debug)]
 enum ShellError {
-    EnvVarError(std::env::VarError),
-    CommandError(std::io::Error),
-    Utf8Error(std::str::Utf8Error),
+    EnvVar(std::env::VarError),
+    Command(std::io::Error),
+    Utf8(std::str::Utf8Error),
 }
 
 impl std::fmt::Display for ShellError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            ShellError::EnvVarError(e) => write!(f, "Failed to get environment variable: {}", e),
-            ShellError::CommandError(e) => write!(f, "Command execution failed: {}", e),
-            ShellError::Utf8Error(e) => write!(f, "Failed to decode output: {}", e),
+            ShellError::EnvVar(e) => write!(f, "Failed to get environment variable: {}", e),
+            ShellError::Command(e) => write!(f, "Command execution failed: {}", e),
+            ShellError::Utf8(e) => write!(f, "Failed to decode output: {}", e),
         }
     }
 }
@@ -78,20 +78,20 @@ impl std::error::Error for ShellError {}
 fn get_shell() -> Result<String, ShellError> {
     let shell_path = match env::var("SHELL") {
         Ok(shell) => Ok(shell),
-        Err(e) => Err(ShellError::EnvVarError(e)),
+        Err(e) => Err(ShellError::EnvVar(e)),
     }
     .or_else(|_| {
         let output = Command::new("sh")
             .arg("-c")
             .arg("echo $0")
             .output()
-            .map_err(ShellError::CommandError)?;
+            .map_err(ShellError::Command)?;
 
         if output.status.success() {
-            let shell = str::from_utf8(&output.stdout).map_err(ShellError::Utf8Error)?;
+            let shell = str::from_utf8(&output.stdout).map_err(ShellError::Utf8)?;
             Ok(shell.trim().to_string())
         } else {
-            Err(ShellError::CommandError(std::io::Error::new(
+            Err(ShellError::Command(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "Command execution was not successful",
             )))
@@ -100,7 +100,7 @@ fn get_shell() -> Result<String, ShellError> {
 
     match shell_path {
         Ok(path) => {
-            let shell = path.split("/").last().unwrap_or("").to_string();
+            let shell = path.split('/').last().unwrap_or("").to_string();
             Ok(shell)
         }
         Err(err) => Err(err),

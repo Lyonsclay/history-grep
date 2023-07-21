@@ -188,7 +188,20 @@ impl History {
             }
         }
     }
+    fn load_history_map(&mut self) {
+        let mut index: u16 = 0;
+        for line in self.history_list.clone() {
+            index += 1;
+            let mut linum_list = match self.history_map.get(&line) {
+                None => Vec::new(),
+                Some(v) => v.to_vec(),
+            };
+            linum_list.push(index);
+            self.history_map.insert(line, linum_list);
+        }
+    }
 }
+
 fn choose_file(items: Vec<PathBuf>) -> Result<PathBuf, Error> {
     let items_display: Vec<String> = items
         .iter()

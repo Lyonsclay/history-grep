@@ -185,6 +185,7 @@ impl History {
                     return;
                 }
             }
+
             let found = self.search_terms.iter().all(|arg| line.contains(arg));
             if found {
                 self.query_results.push(line.clone());

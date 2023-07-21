@@ -23,6 +23,9 @@ struct Cli {
     /// Select a complete file path to search from
     #[arg(short, long, default_value_t = false)]
     file: bool,
+    /// Dedupe output lines
+    #[arg(short, long, default_value_t = true)]
+    dedupe: bool,
 }
 
 struct History {

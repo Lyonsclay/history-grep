@@ -161,19 +161,20 @@ impl History {
         }
     }
 
-    fn query_history_file(&mut self) {
+
+    fn query_history_map(&mut self) {
         println!(
             "Searching for - {:?} - in {:?}",
-           self.search_terms, self.history_path
+            self.search_terms, self.history_path
         );
 
-        for line in &self.history_list {
+        for line in self.history_map.keys() {
             let mut line = line.clone();
 
             match &self.shell_type {
                 Ok(shell_type) => {
                     if shell_type == "zsh" {
-                        line = line.split(';').last().unwrap_or("").to_string();
+                        line = line.split(";").last().unwrap_or("").to_string();
                     }
                 }
                 Err(e) => {
@@ -257,5 +258,7 @@ fn main() {
     }
     history.history_path = search_path;
     history.load_history();
-    history.query_history_file();
+    history.load_history_map();
+    // history.query_history_file();
+    history.query_history_map();
 }

@@ -15,7 +15,7 @@ use dialoguer::{console::Term, theme::ColorfulTheme, Select};
 #[derive(Parser)]
 struct Cli {
     /// Sequence of search terms used to select matching lines
-    pattern: Vec<String>,
+    search_terms: Vec<String>,
     /// Select a history file to search from home folder
     #[arg(long, default_value_t = false)]
     history: bool,
@@ -25,6 +25,8 @@ struct Cli {
 }
 
 struct History {
+    // The list of search terms captured from command line args.
+    search_terms: Vec<String>,
     // The full path to the home directory.
     home_path: PathBuf,
     // The short name of the default shell.
@@ -39,19 +41,23 @@ struct History {
 
 impl History {
     fn new() -> Self {
-        let shell_type = get_shell();
+        let args = Cli::parse();
+        let search_terms = args.search_terms;
 
+        let shell_type = get_shell();
         let home_var = env::var("HOME").unwrap_or_else(|e| {
             println!("{} ${}", e, "HOME");
             String::new()
         });
-
         let home_path = PathBuf::from(home_var);
         let mut history_path = home_path.clone();
+
         if shell_type.is_ok() {
             history_path.push(&format!(".{}_history", shell_type.as_ref().unwrap()));
         }
+
         History {
+            search_terms,
             home_path,
             shell_type,
             history_path,
@@ -152,10 +158,9 @@ impl History {
     }
 
     fn query_history_file(&mut self) {
-        let args = Cli::parse();
         println!(
             "Searching for - {:?} - in {:?}",
-            args.pattern, self.history_path
+           self.search_terms, self.history_path
         );
 
         for line in &self.history_list {
@@ -172,7 +177,7 @@ impl History {
                     return;
                 }
             }
-            let found = args.pattern.iter().all(|arg| line.contains(arg));
+            let found = self.search_terms.iter().all(|arg| line.contains(arg));
             if found {
                 self.query_results.push(line.clone());
                 println!("{}", line);

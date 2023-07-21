@@ -91,10 +91,6 @@ bash
 
 ## Todo
 
-* Capture all lines.
-
-* Capture search terms in `History` variable.
-
 * Dedupe matching lines.
 
 * Enable search term order dependent parsing.

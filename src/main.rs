@@ -145,31 +145,35 @@ impl History {
             }
         }
     }
-
     fn query_history(&mut self) {
         let args = Cli::parse();
         println!(
             "Searching for - {:?} - in {:?}",
             args.pattern, self.history_path
         );
+
         for line in &self.history_list {
-            let mut found = false;
-            for arg in &args.pattern {
-                if line.contains(&*arg) {
-                    found = true;
-                } else {
-                    found = false;
-                    break;
+            let mut line = line.clone();
+
+            match &self.shell_type {
+                Ok(shell_type) => {
+                    if shell_type == "zsh" {
+                        line = line.split(';').last().unwrap_or("").to_string();
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Shell type error: {}", e);
+                    return;
                 }
             }
-            if found == true {
-                self.query_results.push(line.to_owned());
-                println!("{}", line.to_owned());
+            let found = args.pattern.iter().all(|arg| line.contains(arg));
+            if found {
+                self.query_results.push(line.clone());
+                println!("{}", line);
             }
         }
     }
 }
-
 fn choose_file(items: Vec<PathBuf>) -> Result<PathBuf, Error> {
     let items_display: Vec<String> = items
         .iter()

@@ -25,10 +25,15 @@ struct Cli {
 }
 
 struct History {
+    // The full path to the home directory.
     home_path: PathBuf,
+    // The short name of the default shell.
     shell_type: Result<String, ShellError>,
+    // The full path to the file to be searched.
     history_path: PathBuf,
+    // List of full paths to history files in home folder.
     history_list: Vec<String>,
+    // List of matching lines from search file.
     query_results: Vec<String>,
 }
 
@@ -145,7 +150,8 @@ impl History {
             }
         }
     }
-    fn query_history(&mut self) {
+
+    fn query_history_file(&mut self) {
         let args = Cli::parse();
         println!(
             "Searching for - {:?} - in {:?}",
@@ -229,5 +235,5 @@ fn main() {
     }
     history.history_path = search_path;
     history.load_history();
-    history.query_history();
+    history.query_history_file();
 }

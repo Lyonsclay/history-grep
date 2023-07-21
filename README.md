@@ -21,7 +21,7 @@ $ hg docker exec
 [Flags](#flags) •
 [Installation](#installation) •
 [Examples](#examples) •
-[Todo](#todo) •
+[Todo](#todo) 
 
 ## Flags
 
@@ -47,11 +47,65 @@ Options:
 
 ## Examples
 
+1. Expressions with a command line flag(leading dash).
+
+``` sh
+$ hg -- rm -rf
+
+Searching for ["rm", "-rf"] in "/Users/clay/.zsh_history"
+rm -rf venv
+rm -rf ~/.git
+rm -rf data/may_examples
+```
+
+Will work also; `hg rm -- -rf`
+
+``` sh
+hg -- -it -n
+
+Searching for ["-it", "-n"] in "/Users/clay/.zsh_history"
+docker run -it --network dbt minio/mc ls local
+kubectl exec -it airflow-scheduler-0 -n airflow -- sh
+```
+
+2. Expressions with special characters.
+
+Use an escape(back slash) before the character.
+``` sh
+$ hg -- rm \*
+
+Searching for - ["-rf", "rm", "*"] - in "/Users/clay/.zsh_history"
+rm -rf ~/.pyenv/shims/jupyter-*
+rm -rf /Users/clay/dev/airflow/dags/file_transfers/*
+rm source/events/**/*.log
+```
+
 ## Shells
 
 zsh
-* Default log format: : <beginning time>:<elapsed seconds>;<command>
+* Default log format: `: <beginning time>:<elapsed seconds>;<command>`
 
 bash
-* Default log format: <command>
+* Default log format: `<command>`
 * Can take $HISTFILEFORMAT env var to alter format.
+
+## Todo
+
+* Capture all lines.
+
+* Capture search terms in `History` variable.
+
+* Dedupe matching lines.
+
+* Enable search term order dependent parsing.
+
+* Add search for log files.
+
+* Add shell enum structs encapsulating attributes and format patterns.
+
+* Capture row numbers.
+
+* Output row numbers.
+
+* Output range of rows. 
+

@@ -130,8 +130,8 @@ impl History {
         let paths = fs::read_dir(&self.home_path).unwrap();
         let mut hist_paths: Vec<PathBuf> = Vec::new();
 
-        for entry in paths {
-            let path = entry.unwrap();
+        for p in paths {
+            let path = p.unwrap();
             if path.file_name().to_string_lossy().contains("history") {
                 hist_paths.push(path.path());
             }
@@ -255,6 +255,7 @@ fn main() {
     history.history_path = search_path;
     history.load_history();
     history.load_history_map();
-    // history.query_history_file();
     history.query_history_map();
+    println!("history_list = {}", history.history_list.len());
+    println!("history_map = {}", history.history_map.keys().len());
 }

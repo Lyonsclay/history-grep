@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     env,
     env::VarError,
     fs,
@@ -35,6 +36,8 @@ struct History {
     history_path: PathBuf,
     // List of full paths to history files in home folder.
     history_list: Vec<String>,
+    // Map of unique file lines to line_numbers.
+    history_map: HashMap<String, Vec<u16>>,
     // List of matching lines from search file.
     query_results: Vec<String>,
 }
@@ -62,6 +65,7 @@ impl History {
             shell_type,
             history_path,
             history_list: Vec::new(),
+            history_map: HashMap::new(),
             query_results: Vec::new(),
         }
     }

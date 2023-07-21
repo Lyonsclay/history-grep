@@ -164,45 +164,37 @@ impl History {
         }
     }
 
-
     fn query_history_map(&mut self) {
         println!(
             "Searching for - {:?} - in {:?}",
             self.search_terms, self.history_path
         );
 
-        for line in self.history_map.keys() {
-            let mut line = line.clone();
-
-            match &self.shell_type {
-                Ok(shell_type) => {
-                    if shell_type == "zsh" {
-                        line = line.split(";").last().unwrap_or("").to_string();
-                    }
-                }
-                Err(e) => {
-                    eprintln!("Shell type error: {}", e);
-                    return;
-                }
-            }
-
-            let found = self.search_terms.iter().all(|arg| line.contains(arg));
+        for key in self.history_map.keys() {
+            let found = self.search_terms.iter().all(|arg| key.contains(arg));
             if found {
-                self.query_results.push(line.clone());
-                println!("{}", line);
+                self.query_results.push(key.clone());
+                if let Some(value) = self.history_map.get(key) {
+                    println!("{:?}:: {}", value, key);
+                }
             }
         }
     }
+
     fn load_history_map(&mut self) {
         let mut index: u16 = 0;
         for line in self.history_list.clone() {
             index += 1;
-            let mut linum_list = match self.history_map.get(&line) {
-                None => Vec::new(),
-                Some(v) => v.to_vec(),
-            };
-            linum_list.push(index);
-            self.history_map.insert(line, linum_list);
+            let mut line = line;
+            if let Ok(shell_type) = &self.shell_type {
+                if shell_type == "zsh" {
+                    line = line.split(";").last().unwrap_or("").to_string();
+                }
+            }
+            self.history_map
+                .entry(line)
+                .or_insert_with(Vec::new)
+                .push(index);
         }
     }
 }

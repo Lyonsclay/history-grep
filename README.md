@@ -26,14 +26,15 @@ $ hg docker exec
 ## Flags
 
 ``` sh
-Usage: history-grep [OPTIONS] [PATTERN]...
+Usage: hg [OPTIONS] [SEARCH_TERMS]...
 
 Arguments:
-  [PATTERN]...  Sequence of search terms used to select matching lines
+  [SEARCH_TERMS]...  Sequence of search terms used to select matching lines
 
 Options:
       --history  Select a history file to search from home folder
-  -f, --file     Select a complete file path to search
+  -f, --file     Select a complete file path to search from
+  -d, --dedupe   Dedupe output lines
   -h, --help     Print help
 ```
 
@@ -44,6 +45,10 @@ Options:
 2. Install binary as `hg`;
 
 `cargo install --path .`
+
+If you are installing an update.
+
+`cargo install --path . --force`
 
 ## Examples
 
@@ -91,17 +96,14 @@ bash
 
 ## Todo
 
-* Dedupe matching lines.
-
-* Enable search term order dependent parsing.
 
 * Add search for log files.
 
 * Add shell enum structs encapsulating attributes and format patterns.
 
-* Capture row numbers.
-
-* Output row numbers.
-
 * Output range of rows. 
+
+* Capture lines that are not utf-8 in `History` field `not_utf8`.
+
+* `read_lines` from relative file path.
 

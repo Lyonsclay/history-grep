@@ -43,11 +43,15 @@ struct History {
     history_map: HashMap<String, Vec<u16>>,
     // List of matching lines from search file.
     query_results: Vec<String>,
+    // Function to match search_terms with.
+    match_fn: fn(String, Vec<String>) -> bool,
 }
 
 impl History {
     fn new() -> Self {
         let args = Cli::parse();
+        println!("history {:?}", args.history);
+        println!("file {:?}", args.file);
         let search_terms = args.search_terms;
 
         let shell_type = get_shell();

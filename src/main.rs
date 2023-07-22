@@ -18,14 +18,17 @@ struct Cli {
     /// Sequence of search terms used to select matching lines
     search_terms: Vec<String>,
     /// Select a history file to search from home folder
-    #[arg(long, default_value_t = false)]
+    #[arg(long)]
     history: bool,
     /// Select a complete file path to search from
-    #[arg(short, long, default_value_t = false)]
+    #[arg(short, long)]
     file: bool,
     /// Dedupe output lines
-    #[arg(short, long, default_value_t = true)]
+    #[arg(short, long)]
     dedupe: bool,
+    /// Order dependent parsing
+    #[arg(short, long)]
+    ordered: bool,
 }
 
 struct History {

@@ -199,6 +199,35 @@ impl History {
     }
 }
 
+fn ordered_match(key: String, args: Vec<String>) -> bool {
+    let mut line = key.clone().to_string();
+    for a in args {
+        if !line.contains(&a) {
+            return false;
+        } else {
+            line = match line.split(&a).last() {
+                Some(l) => l.to_string(),
+                None => String::from(""),
+            };
+        }
+    }
+    true
+}
+
+fn unordered_match(key: String, args: Vec<String>) -> bool {
+    args.iter().all(|arg| key.contains(arg))
+}
+
+fn get_file_path() -> PathBuf {
+    println!("Please enter a valid file path:");
+    let mut input = String::new();
+    stdin()
+        .read_line(&mut input)
+        .expect("error: unable to read user input");
+    let trimmed_input = input.trim_end_matches('\n'); // Trim the newline at the end
+    PathBuf::from(trimmed_input)
+}
+
 fn choose_file(items: Vec<PathBuf>) -> Result<PathBuf, Error> {
     let items_display: Vec<String> = items
         .iter()

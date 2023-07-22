@@ -175,7 +175,7 @@ impl History {
         );
 
         for key in self.history_map.keys() {
-            let found = self.search_terms.iter().all(|arg| key.contains(arg));
+            let found = (self.match_fn)(key.clone(), self.search_terms.clone());
             if found {
                 self.query_results.push(key.clone());
                 if let Some(value) = self.history_map.get(key) {

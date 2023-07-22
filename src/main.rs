@@ -226,7 +226,7 @@ impl History {
 }
 
 fn ordered_match(key: String, args: Vec<String>) -> bool {
-    let mut line = key.clone().to_string();
+    let mut line = key;
     for a in args {
         if !line.contains(&a) {
             return false;
@@ -284,6 +284,7 @@ fn main() {
     history.load_history();
     history.load_history_map();
     history.query_history_map();
+
     println!("history_list = {}", history.history_list.len());
     println!("history_map = {}", history.history_map.keys().len());
 }

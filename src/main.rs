@@ -74,6 +74,25 @@ impl History {
             history_list: Vec::new(),
             history_map: HashMap::new(),
             query_results: Vec::new(),
+            match_fn: unordered_match,
+        }
+    }
+
+    fn apply_flags(&mut self) {
+        let matches = Cli::parse();
+
+        if matches.history {
+            let paths = self
+                .get_hist_file_paths()
+                .expect("Failed to history paths.");
+            self.history_path = choose_file(paths).expect("Failed to choose a path.");
+        } else if matches.file {
+            self.history_path = get_file_path();
+        } else if matches.ordered {
+            // set History::match_fn
+            self.match_fn = ordered_match;
+        } else {
+            println!("No flags ------=======>> ()")
         }
     }
 }
@@ -255,37 +274,10 @@ fn choose_file(items: Vec<PathBuf>) -> Result<PathBuf, Error> {
     }
 }
 
-fn get_file_path() -> PathBuf {
-    println!("Please enter a valid file path:");
-    let mut input = String::new();
-    stdin()
-        .read_line(&mut input)
-        .expect("error: unable to read user input");
-    PathBuf::from(input)
-}
-
 fn main() {
-    let args = Cli::parse();
     let mut history = History::new();
-    let search_path: PathBuf;
-    if args.history {
-        let paths = history
-            .get_hist_file_paths()
-            .expect("Failed to history paths.");
-        search_path = choose_file(paths).expect("Failed to choose a path.");
-    } else if args.file {
-        search_path = get_file_path()
-        // search
-    } else if history.history_path.exists() {
-        println!(
-            "It appears that you are using {} shell as your default.",
-            history.shell_type.as_ref().unwrap()
-        );
-        search_path = history.history_path
-    } else {
-        search_path = get_file_path()
-    }
-    history.history_path = search_path;
+
+    history.apply_flags();
     history.load_history();
     history.load_history_map();
     history.query_history_map();

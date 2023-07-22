@@ -228,13 +228,10 @@ impl History {
 fn ordered_match(key: String, args: Vec<String>) -> bool {
     let mut line = key;
     for a in args {
-        if !line.contains(&a) {
-            return false;
+        if let Some(pos) = line.find(&a) {
+            line = line[pos + a.len()..].to_string();
         } else {
-            line = match line.split(&a).last() {
-                Some(l) => l.to_string(),
-                None => String::from(""),
-            };
+            return false;
         }
     }
     true

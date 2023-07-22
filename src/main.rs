@@ -214,7 +214,7 @@ impl History {
             let mut line = line;
             if let Ok(shell_type) = &self.shell_type {
                 if shell_type == "zsh" {
-                    line = line.split(";").last().unwrap_or("").to_string();
+                    line = line.split(';').last().unwrap_or("").to_string();
                 }
             }
             self.history_map

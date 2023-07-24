@@ -96,7 +96,6 @@ bash
 
 ## Todo
 
-
 * Add search for log files.
 
 * Add shell enum structs encapsulating attributes and format patterns.
@@ -106,4 +105,6 @@ bash
 * Capture lines that are not utf-8 in `History` field `not_utf8`.
 
 * `read_lines` from relative file path.
+
+* Use `--file` flag non-interactively.
 

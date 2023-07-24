@@ -1,4 +1,5 @@
 use std::{
+    // borrow::Borrow,
     collections::HashMap,
     env,
     env::VarError,
@@ -53,8 +54,6 @@ struct History {
 impl History {
     fn new() -> Self {
         let args = Cli::parse();
-        println!("history {:?}", args.history);
-        println!("file {:?}", args.file);
         let search_terms = args.search_terms;
 
         let shell_type = get_shell();
@@ -95,63 +94,9 @@ impl History {
             // set History::match_fn
             self.match_fn = ordered_match;
         } else {
-            println!("No flags ------=======>> ()")
+            // default behavior
         }
     }
-}
-
-#[derive(Debug)]
-enum ShellError {
-    EnvVar(std::env::VarError),
-    Command(std::io::Error),
-    Utf8(std::str::Utf8Error),
-}
-
-impl std::fmt::Display for ShellError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            ShellError::EnvVar(e) => write!(f, "Failed to get environment variable: {}", e),
-            ShellError::Command(e) => write!(f, "Command execution failed: {}", e),
-            ShellError::Utf8(e) => write!(f, "Failed to decode output: {}", e),
-        }
-    }
-}
-
-impl std::error::Error for ShellError {}
-
-fn get_shell() -> Result<String, ShellError> {
-    let shell_path = match env::var("SHELL") {
-        Ok(shell) => Ok(shell),
-        Err(e) => Err(ShellError::EnvVar(e)),
-    }
-    .or_else(|_| {
-        let output = Command::new("sh")
-            .arg("-c")
-            .arg("echo $0")
-            .output()
-            .map_err(ShellError::Command)?;
-
-        if output.status.success() {
-            let shell = str::from_utf8(&output.stdout).map_err(ShellError::Utf8)?;
-            Ok(shell.trim().to_string())
-        } else {
-            Err(ShellError::Command(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Command execution was not successful",
-            )))
-        }
-    });
-
-    match shell_path {
-        Ok(path) => {
-            let shell = path.split('/').last().unwrap_or("").to_string();
-            Ok(shell)
-        }
-        Err(err) => Err(err),
-    }
-}
-
-impl History {
     fn get_hist_file_paths(&self) -> Result<Vec<PathBuf>, VarError> {
         let paths = fs::read_dir(&self.home_path).unwrap();
         let mut hist_paths: Vec<PathBuf> = Vec::new();
@@ -225,11 +170,79 @@ impl History {
     }
 }
 
-fn ordered_match(key: String, args: Vec<String>) -> bool {
-    let mut line = key;
+#[derive(Debug)]
+enum ShellError {
+    EnvVar(std::env::VarError),
+    Command(std::io::Error),
+    Utf8(std::str::Utf8Error),
+}
+
+impl std::fmt::Display for ShellError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ShellError::EnvVar(e) => write!(f, "Failed to get environment variable: {}", e),
+            ShellError::Command(e) => write!(f, "Command execution failed: {}", e),
+            ShellError::Utf8(e) => write!(f, "Failed to decode output: {}", e),
+        }
+    }
+}
+
+impl std::error::Error for ShellError {}
+
+fn get_shell() -> Result<String, ShellError> {
+    let shell_path = match env::var("SHELL") {
+        Ok(shell) => Ok(shell),
+        Err(e) => Err(ShellError::EnvVar(e)),
+    }
+    .or_else(|_| {
+        let output = Command::new("sh")
+            .arg("-c")
+            .arg("echo $0")
+            .output()
+            .map_err(ShellError::Command)?;
+
+        if output.status.success() {
+            let shell = str::from_utf8(&output.stdout).map_err(ShellError::Utf8)?;
+            Ok(shell.trim().to_string())
+        } else {
+            Err(ShellError::Command(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Command execution was not successful",
+            )))
+        }
+    });
+
+    match shell_path {
+        Ok(path) => {
+            let shell = path.split('/').last().unwrap_or("").to_string();
+            Ok(shell)
+        }
+        Err(err) => Err(err),
+    }
+}
+
+fn get_current_directory() -> PathBuf {
+    let res = env::current_dir();
+    match res {
+        Ok(path) => {
+            let p = path.into_os_string().into_string().unwrap();
+            return PathBuf::from(p);
+        }
+        Err(_) => PathBuf::from(""),
+    }
+}
+
+
+/// Functions ordered_match and unordered_match contain respective
+/// matching logic that corresponds to the `--order` flag. Either
+/// function is set to the `History::match_fn` attribute.
+
+/// Sequentially check for `key` text for a match with the arg terms.
+fn ordered_match(mut key: String, args: Vec<String>) -> bool {
+    // let mut line = key;
     for a in args {
-        if let Some(pos) = line.find(&a) {
-            line = line[pos + a.len()..].to_string();
+        if let Some(pos) = key.find(&a) {
+            key = key[pos + a.len()..].to_string();
         } else {
             return false;
         }
@@ -237,8 +250,16 @@ fn ordered_match(key: String, args: Vec<String>) -> bool {
     true
 }
 
-fn unordered_match(key: String, args: Vec<String>) -> bool {
-    args.iter().all(|arg| key.contains(arg))
+/// Check that all arg terms match the text phrase.
+fn unordered_match(mut key: String, args: Vec<String>) -> bool {
+    for a in args {
+        if let Some(_) = key.find(&a) {
+            key = key.replacen(&a, "", 1);
+        } else {
+            return false;
+        }
+    }
+    true
 }
 
 fn get_file_path() -> PathBuf {

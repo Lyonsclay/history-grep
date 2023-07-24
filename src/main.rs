@@ -156,12 +156,6 @@ impl History {
         let mut index: u16 = 0;
         for line in self.history_list.clone() {
             index += 1;
-            let mut line = line;
-            if let Ok(shell_type) = &self.shell_type {
-                if shell_type == "zsh" {
-                    line = line.split(';').last().unwrap_or("").to_string();
-                }
-            }
             self.history_map
                 .entry(line)
                 .or_insert_with(Vec::new)
